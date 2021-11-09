@@ -1,8 +1,84 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import { useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css'
+import setUpListeners from './api/hello';
+import * as HIDCodes from '../HIDCodes.json';
+
+let device;
+
 
 export default function Home() {
+  
+  
+  const [clockwise, setClockwise] = useState(4);
+  const [antiClockwise, setAnticlockwise] = useState(5);
+  const [button, setButton] = useState(9);
+  
+
+
+
+
+  useEffect(() => {
+    setUpListeners()
+  
+    async function getDevices () {
+  
+      let devices = await navigator.hid.getDevices();
+      devices.forEach(device => {
+        console.log(`HID: ${device.productName}`);
+      });
+    }
+    getDevices()
+  }, []);
+
+  async function onPress(){
+    console.log("pressed")
+     device = await navigator.hid.requestDevice({filters: [{ vendorId:  0x4550, productId: 0x0232, usagePage: 0xFF60, usage:0x61}]})
+    console.log(`HID: ${device}`);
+    device.forEach( d => console.log(d.collections.usage))
+    if (!device[0].opened){
+      await device[0].open()
+    }
+    console.log(device[0])
+    device[0].addEventListener("inputreport", event => {
+      const { data, device, reportId } = event;
+      console.log(data)
+      let array = []
+      for (let i = 0; i < 8; i++) array.push(data.getUint8(i))
+
+
+      console.log(array)
+
+    });
+    
+  }
+  async function sendReport(){
+    console.log("t")
+    if (!device[0].opened){
+      await device[0].open()
+    }
+    let data = new Uint8Array([10,1,12,3,4,5,6,17])
+    console.log(data)
+    await device[0].sendReport(0x00, data)
+  }
+
+  //structure for HID change messages
+  /*
+  * 0 prject code 0x45
+  * 1 Encoder Mode Code between 0x01 and 0x06
+  * 2 Key: 
+  *      clockwise 0x01
+  *      anticlockwise 0x02
+  *      button 0x03
+  * 4 Keycode
+  */ 
+  async function updateKeymap(key, e){
+    let data = new Uint8Array([0x45, 0x01, key, e.target.value]);
+    await device[0].sendReport(0x00, data)
+
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -12,44 +88,35 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+        <button onClick={onPress}>
+          Click Me!
+        </button>
+        <button onClick={sendReport}>
+          Report
+        </button>
+        <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
+          <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)"}} onClick={sendReport}></div>
+          <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)"}}></div>
+          <div className={styles.sector} style={{transform: "rotate(180deg) skew(30deg)", background:"rgb(0, 255, 0)"}}></div>
+          <div className={styles.sector} style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(0, 0, 255)"}}></div>
+          <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)"}}></div>
+          <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)"}}></div>
         </div>
+        <span className="dot"></span>
+        <form>
+          <label>antiClockwise:</label>
+          <select value={antiClockwise} onChange={(e) => {console.log(e.target.value); setAnticlockwise(e.target.value); updateKeymap(0x01, e)}}>
+            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
+          </select>
+          <label>Button:</label>
+          <select value={button} onChange={(e) => {setButton(e.target.value); updateKeymap(0x02, e)}}>
+            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
+          </select>
+          <label>Clockwise:</label>
+          <select value={clockwise} onChange={(e) => {setClockwise(e.target.value); updateKeymap(0x00, e)}}>
+            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
+          </select>
+        </form>
       </main>
 
       <footer className={styles.footer}>
