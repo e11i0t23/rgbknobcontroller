@@ -1,9 +1,14 @@
 .container {
   padding: 0 2rem;
+
+}
+
+.body {
+  background-color: #ffa500 ;
 }
 
 .main {
-  min-height: 100vh;
+  min-height: 80vh;
   padding: 4rem 0;
   flex: 1;
   display: flex;
@@ -141,5 +146,33 @@
 
 .sector:hover {
   border: black 5px solid;
+}
+
+.form {
+  background-color: black;
+  font-size: 1em;
+  color: #eaeaea;
+  padding: 0.5em;
+  border-radius:10px;
+  width: 360px;
+  position: relative;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 15px;
+}
+
+.button {
+
+  display: inline-block;
+  background-color: red;
+  padding: 0.3em 1.2em;
+  margin: 0 0.1em 1em 0;
+  border: 0.16em solid rgba(255, 255, 255, 0);
+  border-radius: 2em;
+  color: white;
+}
+.button:hover{
+  border-color: rgba(255, 255, 255, 1);
 }
 
