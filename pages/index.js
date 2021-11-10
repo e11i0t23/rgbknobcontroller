@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css'
 import setUpListeners from './api/hello';
 import * as HIDCodes from '../HIDCodes.json';
+import * as RGBModes from '../RGBModes.json';
 
 let device;
 
@@ -14,6 +15,7 @@ export default function Home() {
   const [clockwise, setClockwise] = useState(4);
   const [antiClockwise, setAntiClockwise] = useState(5);
   const [button, setButton] = useState(9);
+  const [rgbmode, setrgbmode] = useState(1);
   const [encMode, setEncMode] = useState(4);
   
 
@@ -55,14 +57,20 @@ export default function Home() {
       if (array[0] == 17746){
         handleEncMode(array[1])
       }
+      if (array[0] == 17747){
+        setrgbmode(array[1])
+      }
 
 
       console.log(array)
 
     });
     // get current encoder layer
-    let data = new Uint16Array([0x4552, 0x00, 0x00, 0x00]);
-    await device[0].sendReport(0x00, data)
+    let encdata = new Uint16Array([0x4552, 0x00, 0x00, 0x00]);
+    await device[0].sendReport(0x00, encdata)
+    // get current lighting
+    let rgbdata = new Uint16Array([0x4553, 0x00, 0x00, 0x00]);
+    await device[0].sendReport(0x00, rgbdata)
     
   }
   async function sendReport(){
@@ -88,6 +96,13 @@ export default function Home() {
   async function updateKeymap(key, e){
     console.log(e.target.value);
     let data = new Uint16Array([0x4550, encMode, key, e.target.value]);
+    await device[0].sendReport(0x00, data)
+
+  }
+
+  async function updateRGB(e){
+    console.log(e.target.value);
+    let data = new Uint16Array([0x4553, e.target.value]);
     await device[0].sendReport(0x00, data)
 
   }
@@ -123,19 +138,25 @@ export default function Home() {
           <div className={styles.form}>
           <label>Anti-Clockwise:  </label>
           <select value={antiClockwise} style={{float: "right"}} onChange={(e) => {console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e)}}>
-            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
+            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
           </select>
           </div>
           <div className={styles.form}>
           <label>Button:</label>
           <select value={button} style={{float: "right"}} onChange={(e) => {setButton(e.target.value); updateKeymap(0x02, e)}}>
-            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
+            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
           </select>
           </div>
           <div className={styles.form}>
           <label>Clockwise:</label>
           <select value={clockwise} style={{float: "right"}} onChange={(e) => {setClockwise(e.target.value); updateKeymap(0x00, e)}}>
-            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
+            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+          </select>
+          </div>
+          <div className={styles.form}>
+          <label>RGB Mode:</label>
+          <select value={rgbmode} style={{float: "right"}} onChange={(e) => {setrgbmode(e.target.value); updateRGB(e)}}>
+            {Object.entries(RGBModes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
           </select>
           </div>
         </form>
