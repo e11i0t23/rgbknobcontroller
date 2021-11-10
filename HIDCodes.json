@@ -66,8 +66,8 @@
 "F11":	68	,
 "F12":	69	,
 "PrintScreen":	70	,
-"Scroll Lock":	71	,
-"Pause":	72	,
+"Scroll Lock/ BRGT DN MAC":	71	,
+"Pause/ BRGT UP MAC":	72	,
 "Insert":	73	,
 "Home":	74	,
 "PageUp":	75	,
@@ -154,6 +154,12 @@
 "Oper":	161	,
 "Clear/Again":	162	,
 "CrSel/Props":	163	,
-"ExSel":	164
-        
+"ExSel":	164,
+"Brightness Up": 189,
+"Brightness Down": 188,
+"System Sleep": 166,
+"RGB Mode +": 23748,
+"RGB Mode -": 23749,
+"RGB Mode Toggle": 23747
+
 }

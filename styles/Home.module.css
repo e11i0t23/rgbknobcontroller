@@ -140,6 +140,6 @@
 }
 
 .sector:hover {
-  opacity: 100%;
+  border: black 5px solid;
 }
 

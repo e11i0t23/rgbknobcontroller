@@ -12,8 +12,9 @@ export default function Home() {
   
   
   const [clockwise, setClockwise] = useState(4);
-  const [antiClockwise, setAnticlockwise] = useState(5);
+  const [antiClockwise, setAntiClockwise] = useState(5);
   const [button, setButton] = useState(9);
+  const [encMode, setEncMode] = useState(4);
   
 
 
@@ -45,12 +46,23 @@ export default function Home() {
       const { data, device, reportId } = event;
       console.log(data)
       let array = []
-      for (let i = 0; i < 8; i++) array.push(data.getUint8(i))
+      for (let i = 0; i < 4; i++) array.push((data.getInt16(2*i)))
+      if (array[0] == 17745){
+        setClockwise(array[1]);
+        setAntiClockwise(array[2])
+        setButton(array[3])
+      }
+      if (array[0] == 17746){
+        handleEncMode(array[1])
+      }
 
 
       console.log(array)
 
     });
+    // get current encoder layer
+    let data = new Uint16Array([0x4552, 0x00, 0x00, 0x00]);
+    await device[0].sendReport(0x00, data)
     
   }
   async function sendReport(){
@@ -74,9 +86,16 @@ export default function Home() {
   * 4 Keycode
   */ 
   async function updateKeymap(key, e){
-    let data = new Uint8Array([0x45, 0x01, key, e.target.value]);
+    console.log(e.target.value);
+    let data = new Uint16Array([0x4550, encMode, key, e.target.value]);
     await device[0].sendReport(0x00, data)
 
+  }
+
+  async function handleEncMode(encMode){
+    setEncMode(encMode);
+    let data = new Uint16Array([0x4551, encMode]);
+    await device[0].sendReport(0x00, data)
   }
 
   return (
@@ -95,17 +114,17 @@ export default function Home() {
           Report
         </button>
         <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
-          <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)"}} onClick={sendReport}></div>
-          <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)"}}></div>
-          <div className={styles.sector} style={{transform: "rotate(180deg) skew(30deg)", background:"rgb(0, 255, 0)"}}></div>
-          <div className={styles.sector} style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(0, 0, 255)"}}></div>
-          <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)"}}></div>
-          <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)"}}></div>
+          <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)", opacity:(((encMode==0) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(0)}></div>
+          <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)", opacity:(((encMode==1) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(1)}></div>
+          <div className={styles.sector} style={{transform: "rotate(180deg) skew(30deg)", background:"rgb(0, 255, 0)", opacity:(((encMode==2) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(2)}></div>
+          <div className={styles.sector} style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(0, 0, 255)", opacity:(((encMode==3) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(3)}></div>
+          <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)", opacity:(((encMode==4) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(4)}></div>
+          <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)", opacity:(((encMode==5) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(5)}></div>
         </div>
         <span className="dot"></span>
         <form>
           <label>antiClockwise:</label>
-          <select value={antiClockwise} onChange={(e) => {console.log(e.target.value); setAnticlockwise(e.target.value); updateKeymap(0x01, e)}}>
+          <select value={antiClockwise} onChange={(e) => {console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e)}}>
             {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}:{String(value)}</option>)}
           </select>
           <label>Button:</label>
