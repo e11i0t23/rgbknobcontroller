@@ -143,7 +143,7 @@ export default function Home() {
           </button>
           }
           { deviceConnected &&
-          <div>
+          <div className={styles.main}>
             <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
             <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)", opacity:(((encMode==0) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(0)}></div>
             <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)", opacity:(((encMode==1) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(1)}></div>
@@ -151,7 +151,7 @@ export default function Home() {
             <div className={styles.sector} style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(0, 0, 255)", opacity:(((encMode==3) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(3)}></div>
             <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)", opacity:(((encMode==4) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(4)}></div>
             <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)", opacity:(((encMode==5) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(5)}></div>
-          </div>
+            </div>
                     <span className="dot"></span>
                     <form className={styles.formContainer}>
                       <div className={styles.form}>
