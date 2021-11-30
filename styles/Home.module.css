@@ -163,8 +163,12 @@
   border: black 5px solid;
 }
 
+.formContainer{
+  margin-top: 50px;
+}
+
 .form {
-  background-color: black;
+  background-color: rgb(71, 71, 71);
   font-size: 1em;
   color: #eaeaea;
   padding: 0.5em;
@@ -174,7 +178,13 @@
   display: block;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 15px;
+  margin-top: 10px;
+  border-radius: 40px;
+}
+
+.form select {
+  border-radius: 10px;
+  width: 200px;
 }
 
 .button {

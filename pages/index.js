@@ -19,6 +19,7 @@ export default function Home() {
   const [rgbmode, setrgbmode] = useState(1);
   const [encMode, setEncMode] = useState(4);
   const [supportedBrowser, setSupportedBrowser] = useState(false);
+  const [deviceConnected, setDeviceConnected] = useState(false);
 
 
 
@@ -38,6 +39,9 @@ export default function Home() {
         });
       }
       getDevices()
+      navigator.hid.addEventListener('disconnect', device => {
+        setDeviceConnected(false)
+      });
     }
   }, []);
 
@@ -46,6 +50,7 @@ export default function Home() {
     device = await navigator.hid.requestDevice({filters: [{ vendorId:  0x4550, productId: 0x0232, usagePage: 0xFF60, usage:0x61}]})
     console.log(`HID: ${device}`);
     device.forEach( d => console.log(d.collections.usage))
+    setDeviceConnected(true)
     if (!device[0].opened){
       await device[0].open()
     }
@@ -132,10 +137,14 @@ export default function Home() {
         
       { supportedBrowser && 
       <main className={styles.main}>
-        <button className={styles.button} onClick={onPress}>
+          { deviceConnected == false &&
+            <button className={styles.button} onClick={onPress}>
             Connect to device
           </button>
-          <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
+          }
+          { deviceConnected &&
+          <div>
+            <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
             <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)", opacity:(((encMode==0) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(0)}></div>
             <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)", opacity:(((encMode==1) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(1)}></div>
             <div className={styles.sector} style={{transform: "rotate(180deg) skew(30deg)", background:"rgb(0, 255, 0)", opacity:(((encMode==2) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(2)}></div>
@@ -143,33 +152,35 @@ export default function Home() {
             <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)", opacity:(((encMode==4) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(4)}></div>
             <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)", opacity:(((encMode==5) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(5)}></div>
           </div>
-          <span className="dot"></span>
-          <form >
-            <div className={styles.form}>
-            <label>Anti-Clockwise:  </label>
-            <select value={antiClockwise} style={{float: "right"}} onChange={(e) => {console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e)}}>
-              {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-            </select>
-            </div>
-            <div className={styles.form}>
-            <label>Button:</label>
-            <select value={button} style={{float: "right"}} onChange={(e) => {setButton(e.target.value); updateKeymap(0x02, e)}}>
-              {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-            </select>
-            </div>
-            <div className={styles.form}>
-            <label>Clockwise:</label>
-            <select value={clockwise} style={{float: "right"}} onChange={(e) => {setClockwise(e.target.value); updateKeymap(0x00, e)}}>
-              {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-            </select>
-            </div>
-            <div className={styles.form}>
-            <label>RGB Mode:</label>
-            <select value={rgbmode} style={{float: "right"}} onChange={(e) => {setrgbmode(e.target.value); updateRGB(e)}}>
-              {Object.entries(RGBModes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-            </select>
-            </div>
-          </form>
+                    <span className="dot"></span>
+                    <form className={styles.formContainer}>
+                      <div className={styles.form}>
+                      <label>Anti-Clockwise:  </label>
+                      <select value={antiClockwise} style={{float: "right"}} onChange={(e) => {console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e)}}>
+                        {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+                      </select>
+                      </div>
+                      <div className={styles.form}>
+                      <label>Button:</label>
+                      <select value={button} style={{float: "right"}} onChange={(e) => {setButton(e.target.value); updateKeymap(0x02, e)}}>
+                        {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+                      </select>
+                      </div>
+                      <div className={styles.form}>
+                      <label>Clockwise:</label>
+                      <select value={clockwise} style={{float: "right"}} onChange={(e) => {setClockwise(e.target.value); updateKeymap(0x00, e)}}>
+                        {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+                      </select>
+                      </div>
+                      <div className={styles.form}>
+                      <label>RGB Mode:</label>
+                      <select value={rgbmode} style={{float: "right"}} onChange={(e) => {setrgbmode(e.target.value); updateRGB(e)}}>
+                        {Object.entries(RGBModes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+                      </select>
+                      </div>
+                    </form>
+                    </div>
+          }
         </main>
         }
         { supportedBrowser==false &&
