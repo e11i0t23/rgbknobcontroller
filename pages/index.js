@@ -7,6 +7,7 @@ import * as HIDCodes from '../HIDCodes.json';
 import * as RGBModes from '../RGBModes.json';
 
 let device;
+let webHID;
 
 
 export default function Home() {
@@ -17,27 +18,32 @@ export default function Home() {
   const [button, setButton] = useState(9);
   const [rgbmode, setrgbmode] = useState(1);
   const [encMode, setEncMode] = useState(4);
-  
+  const [supportedBrowser, setSupportedBrowser] = useState(false);
 
 
 
 
   useEffect(() => {
-    setUpListeners()
-  
-    async function getDevices () {
-  
-      let devices = await navigator.hid.getDevices();
-      devices.forEach(device => {
-        console.log(`HID: ${device.productName}`);
-      });
+    webHID = navigator.hid
+    console.log(webHID);
+    console.log(navigator.hid)
+    if (navigator.hid){
+      setSupportedBrowser(true)
+      setUpListeners()
+      async function getDevices () {
+    
+        let devices = await navigator.hid.getDevices();
+        devices.forEach(device => {
+          console.log(`HID: ${device.productName}`);
+        });
+      }
+      getDevices()
     }
-    getDevices()
   }, []);
 
   async function onPress(){
     console.log("pressed")
-     device = await navigator.hid.requestDevice({filters: [{ vendorId:  0x4550, productId: 0x0232, usagePage: 0xFF60, usage:0x61}]})
+    device = await navigator.hid.requestDevice({filters: [{ vendorId:  0x4550, productId: 0x0232, usagePage: 0xFF60, usage:0x61}]})
     console.log(`HID: ${device}`);
     device.forEach( d => console.log(d.collections.usage))
     if (!device[0].opened){
@@ -116,51 +122,65 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>RGBKnob Controll</title>
+        <title>RGBKnob Control</title>
         <meta name="description" content="Control for RGB Knob" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
+      <header className={styles.header}>
+        <h1>RGBKnob Control</h1>
+      </header>
+        
+      { supportedBrowser && 
       <main className={styles.main}>
         <button className={styles.button} onClick={onPress}>
-          Connect to device
-        </button>
-        <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
-          <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)", opacity:(((encMode==0) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(0)}></div>
-          <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)", opacity:(((encMode==1) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(1)}></div>
-          <div className={styles.sector} style={{transform: "rotate(180deg) skew(30deg)", background:"rgb(0, 255, 0)", opacity:(((encMode==2) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(2)}></div>
-          <div className={styles.sector} style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(0, 0, 255)", opacity:(((encMode==3) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(3)}></div>
-          <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)", opacity:(((encMode==4) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(4)}></div>
-          <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)", opacity:(((encMode==5) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(5)}></div>
-        </div>
-        <span className="dot"></span>
-        <form >
-          <div className={styles.form}>
-          <label>Anti-Clockwise:  </label>
-          <select value={antiClockwise} style={{float: "right"}} onChange={(e) => {console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e)}}>
-            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-          </select>
+            Connect to device
+          </button>
+          <div className={styles.wrapper} style={{transform: "rotate(30deg)"}}>
+            <div className={styles.sector} style={{transform: "rotate(60deg) skew(30deg)", background:"rgb(255, 0, 0)", opacity:(((encMode==0) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(0)}></div>
+            <div className={styles.sector} style={{transform: "rotate(120deg) skew(30deg)", background:"rgb(255, 255, 0)", opacity:(((encMode==1) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(1)}></div>
+            <div className={styles.sector} style={{transform: "rotate(180deg) skew(30deg)", background:"rgb(0, 255, 0)", opacity:(((encMode==2) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(2)}></div>
+            <div className={styles.sector} style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(0, 0, 255)", opacity:(((encMode==3) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(3)}></div>
+            <div className={styles.sector} style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(122, 0, 255)", opacity:(((encMode==4) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(4)}></div>
+            <div className={styles.sector} style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(127, 165, 33)", opacity:(((encMode==5) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(5)}></div>
           </div>
-          <div className={styles.form}>
-          <label>Button:</label>
-          <select value={button} style={{float: "right"}} onChange={(e) => {setButton(e.target.value); updateKeymap(0x02, e)}}>
-            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-          </select>
-          </div>
-          <div className={styles.form}>
-          <label>Clockwise:</label>
-          <select value={clockwise} style={{float: "right"}} onChange={(e) => {setClockwise(e.target.value); updateKeymap(0x00, e)}}>
-            {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-          </select>
-          </div>
-          <div className={styles.form}>
-          <label>RGB Mode:</label>
-          <select value={rgbmode} style={{float: "right"}} onChange={(e) => {setrgbmode(e.target.value); updateRGB(e)}}>
-            {Object.entries(RGBModes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
-          </select>
-          </div>
-        </form>
-      </main>
+          <span className="dot"></span>
+          <form >
+            <div className={styles.form}>
+            <label>Anti-Clockwise:  </label>
+            <select value={antiClockwise} style={{float: "right"}} onChange={(e) => {console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e)}}>
+              {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+            </select>
+            </div>
+            <div className={styles.form}>
+            <label>Button:</label>
+            <select value={button} style={{float: "right"}} onChange={(e) => {setButton(e.target.value); updateKeymap(0x02, e)}}>
+              {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+            </select>
+            </div>
+            <div className={styles.form}>
+            <label>Clockwise:</label>
+            <select value={clockwise} style={{float: "right"}} onChange={(e) => {setClockwise(e.target.value); updateKeymap(0x00, e)}}>
+              {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+            </select>
+            </div>
+            <div className={styles.form}>
+            <label>RGB Mode:</label>
+            <select value={rgbmode} style={{float: "right"}} onChange={(e) => {setrgbmode(e.target.value); updateRGB(e)}}>
+              {Object.entries(RGBModes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
+            </select>
+            </div>
+          </form>
+        </main>
+        }
+        { supportedBrowser==false &&
+        <main className={styles.main}>
+          <p>Unsupported Web-Browser, please use one that is compatible with WebHID</p>
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebHID_API#browser_compatibility"
+            style={{textDecoration:"underline"}}>
+            List of compatible Browsers
+          </a>
+        </main>
+      }
 
       <footer className={styles.footer}>
         <a
