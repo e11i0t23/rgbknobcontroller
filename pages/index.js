@@ -151,7 +151,16 @@ export default function Home() {
             <div className={styles.sector}  style={{transform: "rotate(240deg) skew(30deg)", background:"rgb(1,126,253)",   opacity:(((encMode==3) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(3)}></div>
             <div className={styles.sector}  style={{transform: "rotate(300deg) skew(30deg)", background:"rgb(255,0,226)",   opacity:(((encMode==4) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(4)}></div>
             <div className={styles.sector}  style={{transform: "rotate(360deg) skew(30deg)", background:"rgb(247,247,247)", opacity:(((encMode==5) ? 100 : 50 )+"%")}} onClick={() => handleEncMode(5)}></div>
-            <div className={styles.centre}></div>
+            <div className={styles.center}  style={{transform: "rotate(330deg)"}}>
+              <div className={styles.centerImg}>
+                <Image 
+                alt="SF Logo"
+                src="/SmoothFaces_icon.png"
+                objectPosition= "center"
+                layout="fill"
+                quality={100}/>
+              </div>
+            </div>
             </div>
                     <span className="dot"></span>
                     <form className={styles.formContainer}>
