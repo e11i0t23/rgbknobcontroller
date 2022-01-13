@@ -213,7 +213,7 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Configurator designed By Elliot Powell, EPKB.DESIGN {' '}
+          Configurator designed By Elliot Powell {' '}
         </a>
       </footer>
     </div>
