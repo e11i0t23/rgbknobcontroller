@@ -199,9 +199,9 @@ export default function Home() {
       }
       {supportedBrowser == false &&
         <main className={styles.main}>
-          <p>Unsupported Web-Browser, please use one that is compatible with WebHID</p>
+          <p style={{color:"red"}}>Unsupported Web-Browser, please use one that is compatible with WebHID</p>
           <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebHID_API#browser_compatibility"
-            style={{ textDecoration: "underline" }}>
+            style={{ textDecoration: "underline", color:"red"}}>
             List of compatible Browsers
           </a>
         </main>
