@@ -2,13 +2,12 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css'
-import setUpListeners from './api/hello';
 import * as HIDCodes from '../HIDCodes.json';
 import * as RGBModes from '../RGBModes.json';
 
 let device;
-let webHID;
 
+// Led Colour asigned by default to each individual layer
 let layer_colours = ["rgb(254,45,4)", "rgb(254,239,0)", "rgb(0,255,33)", "rgb(1,126,253)", "rgb(255,0,226)", "rgb(247,247,247)"]
 
 
@@ -25,60 +24,57 @@ export default function Home() {
 
 
 
-
+  // Check that browser supports webHID and add some basic event listeners
   useEffect(() => {
-    webHID = navigator.hid
-    console.log(webHID);
-    console.log(navigator.hid)
     if (navigator.hid) {
       setSupportedBrowser(true)
-      setUpListeners()
-      async function getDevices() {
-
-        let devices = await navigator.hid.getDevices();
-        devices.forEach(device => {
-          console.log(`HID: ${device.productName}`);
-        });
-      }
-      getDevices()
-      navigator.hid.addEventListener('disconnect', device => {
+      navigator.hid.addEventListener('connect', (event) => {
+        console.log(`HID Connected: ${event.device.productName}`);
+        console.dir(event)
+      });
+      navigator.hid.addEventListener('disconnect', (event) => {
+        console.log(`HID disconnected: ${event.device.productName}`);
+        console.dir(event)
         setDeviceConnected(false)
       });
     }
   }, []);
 
+  // Handle attempts to connect to a device
   async function onPress() {
-    console.log("pressed")
+    // Reuqest a RGBDevice on the custom HID page
     device = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x4550, productId: 0x0232, usagePage: 0xFF60, usage: 0x61 }] })
     console.log(`HID: ${device}`);
     device.forEach(d => console.log(d.collections.usage))
+    // See if we have found a valid device
     if (device[0]) {
+      // Open a connection to the device
       if (!device[0].opened) {
         await device[0].open()
         setDeviceConnected(true)
       }
-      console.log(device[0])
+
+      // Add the event listener for interpreting reports from the device
       device[0].addEventListener("inputreport", event => {
         const { data, device, reportId } = event;
-        console.log(data)
         let array = []
         for (let i = 0; i < 4; i++) array.push((data.getInt16(2 * i)))
+        // If the type code is 0x4551 we update the ui according to the keymap assigned for that layer
         if (array[0] == 17745) {
           setClockwise(array[1]);
           setAntiClockwise(array[2])
           setButton(array[3])
         }
+        // If the type code is 0x4552 we set our current layer, this for example occurs if a user adjusts layer on there device
         if (array[0] == 17746) {
           handleEncMode(array[1])
         }
+        //If the type code is 0x4553 we update stored rgb mode
         if (array[0] == 17747) {
           setrgbmode(array[1])
         }
-
-
-        console.log(array)
-
       });
+      // when the device is first opened we need to find out basic information on its current state
       // get current encoder layer
       let encdata = new Uint16Array([0x4552, 0x00, 0x00, 0x00]);
       await device[0].sendReport(0x00, encdata)
@@ -88,19 +84,11 @@ export default function Home() {
 
     }
   }
-  async function sendReport() {
-    console.log("t")
-    if (!device[0].opened) {
-      await device[0].open()
-    }
-    let data = new Uint8Array([10, 1, 12, 3, 4, 5, 6, 17])
-    console.log(data)
-    await device[0].sendReport(0x00, data)
-  }
 
   //structure for HID change messages
   /*
-  * 0 prject code 0x45
+  * Update a keybinding
+  * 0 type code 0x4550
   * 1 Encoder Mode Code between 0x01 and 0x06
   * 2 Key: 
   *      clockwise 0x01
@@ -109,19 +97,27 @@ export default function Home() {
   * 4 Keycode
   */
   async function updateKeymap(key, e) {
-    console.log(e.target.value);
     let data = new Uint16Array([0x4550, encMode, key, e.target.value]);
     await device[0].sendReport(0x00, data)
 
   }
 
+  /*
+  * Update the grb settings on the device
+  * 0 type code 0x4553
+  * 1 RGB Mode
+  */
   async function updateRGB(e) {
-    console.log(e.target.value);
     let data = new Uint16Array([0x4553, e.target.value]);
     await device[0].sendReport(0x00, data)
 
   }
 
+  /*
+  * Load an encoder mode from the device 
+  * 0 type code 0x4551
+  * 1 Encoder Mode
+  */
   async function handleEncMode(encMode) {
     setEncMode(encMode);
     let data = new Uint16Array([0x4551, encMode]);
@@ -141,11 +137,13 @@ export default function Home() {
 
       {supportedBrowser &&
         <main className={styles.main}>
+          {/* If No device Connected we show our connect button which allows a user to request to connect to the device */}
           {deviceConnected == false &&
             <button className={styles.button} onClick={onPress}>
               Connect to device
             </button>
           }
+          {/* Once a device is connected we showcase the modificaation menu */}
           {deviceConnected &&
             <div className={styles.main}>
               <div className={styles.wrapper} style={{ transform: "rotate(30deg)" }}>
@@ -170,7 +168,7 @@ export default function Home() {
               <form className={styles.formContainer}>
                 <div className={styles.form}>
                   <label>Anti-Clockwise:  </label>
-                  <select value={antiClockwise} style={{ float: "right", backgroundColor: layer_colours[encMode] }} onChange={(e) => { console.log(e.target.value); setAntiClockwise(e.target.value); updateKeymap(0x01, e) }}>
+                  <select value={antiClockwise} style={{ float: "right", backgroundColor: layer_colours[encMode] }} onChange={(e) => { setAntiClockwise(e.target.value); updateKeymap(0x01, e) }}>
                     {Object.entries(HIDCodes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
                   </select>
                 </div>
@@ -188,7 +186,7 @@ export default function Home() {
                 </div>
                 <div className={styles.form}>
                   <label>RGB Mode:</label>
-                  <select value={rgbmode} style={{ float: "right", backgroundColor:"rgb(199,199,199)" }} onChange={(e) => { setrgbmode(e.target.value); updateRGB(e) }}>
+                  <select value={rgbmode} style={{ float: "right", backgroundColor: "rgb(199,199,199)" }} onChange={(e) => { setrgbmode(e.target.value); updateRGB(e) }}>
                     {Object.entries(RGBModes).map(([key, value]) => <option key={value} value={value}>{key}</option>)}
                   </select>
                 </div>
@@ -197,11 +195,12 @@ export default function Home() {
           }
         </main>
       }
+      {/* If the browser does not support webHID we inform the user to this fact */}
       {supportedBrowser == false &&
         <main className={styles.main}>
-          <p style={{color:"red"}}>Unsupported Web-Browser, please use one that is compatible with WebHID</p>
+          <p style={{ color: "red" }}>Unsupported Web-Browser, please use one that is compatible with WebHID</p>
           <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebHID_API#browser_compatibility"
-            style={{ textDecoration: "underline", color:"red"}}>
+            style={{ textDecoration: "underline", color: "red" }}>
             List of compatible Browsers
           </a>
         </main>
@@ -213,7 +212,7 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Configurator designed By Elliot Powell {' '}
+          Configurator designed By Elliot Powell
         </a>
       </footer>
     </div>
